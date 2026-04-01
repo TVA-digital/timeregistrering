@@ -2,13 +2,8 @@
   "version": 2,
   "framework": null,
   "installCommand": "npm install --include=dev",
-  "buildCommand": "npm run build -w shared && npm run build -w server",
+  "buildCommand": "npm run build -w shared && npm run build -w server && npx esbuild server/dist/serverless.js --bundle --platform=node --format=cjs --packages=external --outfile=api/index.js",
   "outputDirectory": "public",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "server/dist/**"
-    }
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/health", "destination": "/api" }

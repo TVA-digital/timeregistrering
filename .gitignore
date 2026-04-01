@@ -29,3 +29,6 @@ npm-debug.log*
 
 # Shared package dist must be committed (Vercel builds server only, not shared)
 !shared/dist/
+
+# Auto-generated serverless bundle (built during deploy)
+api/index.js
