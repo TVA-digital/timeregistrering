@@ -1,0 +1,5 @@
+{
+  "buildCommand": "npm run build -w shared && npm run build -w server",
+  "outputDirectory": "server/dist",
+  "installCommand": "npm install"
+}
