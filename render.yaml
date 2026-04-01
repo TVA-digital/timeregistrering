@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: timeregistrering-api
+    runtime: node
+    buildCommand: npm install && npm run build -w shared && npm run build -w server
+    startCommand: node server/dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: CLIENT_URL
+        sync: false
