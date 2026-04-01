@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/timeEntry.service.js';
 import { badRequest } from '../utils/errors.js';
+import { dateRangeQuery } from '../utils/validators.js';
 
 const router = Router();
 
@@ -10,7 +11,8 @@ const router = Router();
 router.get(
   '/',
   asyncHandler(async (req, res) => {
-    const { status, from, to } = req.query as Record<string, string>;
+    const { status } = req.query as Record<string, string>;
+    const { from, to } = dateRangeQuery.parse(req.query);
     const user = req.user;
 
     const mine = req.query['mine'] === 'true';

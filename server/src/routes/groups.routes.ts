@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/user.service.js';
+import { createGroupSchema, updateGroupSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -10,8 +11,11 @@ router.get(
   '/',
   requireRole(['admin', 'leder']),
   asyncHandler(async (req, res) => {
-    const { department_id } = req.query as Record<string, string>;
-    const groups = await service.listGroups(department_id);
+    // Leder kan bare se grupper i egen avdeling
+    const deptId = req.user.role === 'leder'
+      ? (req.user.department_id ?? undefined)
+      : (req.query as Record<string, string>).department_id;
+    const groups = await service.listGroups(deptId);
     res.json({ data: groups });
   }),
 );
@@ -21,7 +25,8 @@ router.post(
   '/',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const group = await service.createGroup(req.body);
+    const body = createGroupSchema.parse(req.body);
+    const group = await service.createGroup(body);
     res.status(201).json({ data: group });
   }),
 );
@@ -31,7 +36,8 @@ router.patch(
   '/:id',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const group = await service.updateGroup(req.params.id, req.body);
+    const body = updateGroupSchema.parse(req.body);
+    const group = await service.updateGroup(req.params.id, body);
     res.json({ data: group });
   }),
 );

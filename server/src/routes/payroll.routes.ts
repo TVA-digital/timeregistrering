@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/payroll.service.js';
 import { badRequest } from '../utils/errors.js';
+import { dateRangeQuery } from '../utils/validators.js';
 
 const router = Router();
 
@@ -10,12 +11,10 @@ router.get(
   '/export',
   requireRole(['lonningsansvarlig', 'admin']),
   asyncHandler(async (req, res) => {
-    const { from, to, format } = req.query as Record<string, string>;
+    const { format } = req.query as Record<string, string>;
+    const { from, to } = dateRangeQuery.parse(req.query);
 
     if (!from || !to) throw badRequest('Fra- og til-dato er påkrevd');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-      throw badRequest('Datoformat må være YYYY-MM-DD');
-    }
 
     const rows = await service.aggregatePayrollData(from, to);
     const exportFormat = format === 'csv' ? 'csv' : 'xlsx';
@@ -46,7 +45,7 @@ router.get(
   '/preview',
   requireRole(['lonningsansvarlig', 'admin']),
   asyncHandler(async (req, res) => {
-    const { from, to } = req.query as Record<string, string>;
+    const { from, to } = dateRangeQuery.parse(req.query);
     if (!from || !to) throw badRequest('Fra- og til-dato er påkrevd');
     const rows = await service.aggregatePayrollData(from, to);
     res.json({ data: rows });

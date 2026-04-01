@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/absence.service.js';
 import { badRequest } from '../utils/errors.js';
+import { createAbsenceCodeSchema, updateAbsenceCodeSchema, updateAbsenceRequestSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -21,7 +22,8 @@ router.post(
   '/codes',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const code = await service.createAbsenceCode(req.body);
+    const body = createAbsenceCodeSchema.parse(req.body);
+    const code = await service.createAbsenceCode(body);
     res.status(201).json({ data: code });
   }),
 );
@@ -30,7 +32,8 @@ router.patch(
   '/codes/:id',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const code = await service.updateAbsenceCode(req.params.id, req.body);
+    const body = updateAbsenceCodeSchema.parse(req.body);
+    const code = await service.updateAbsenceCode(req.params.id, body);
     res.json({ data: code });
   }),
 );
@@ -74,10 +77,10 @@ router.post(
 router.patch(
   '/requests/:id',
   asyncHandler(async (req, res) => {
-    const { hours_per_day, comment } = req.body;
+    const body = updateAbsenceRequestSchema.parse(req.body);
     const patch: { hours_per_day?: number | null; comment?: string | null } = {};
-    if (hours_per_day !== undefined) patch.hours_per_day = hours_per_day;
-    if (comment !== undefined) patch.comment = comment;
+    if (body.hours_per_day !== undefined) patch.hours_per_day = body.hours_per_day;
+    if (body.comment !== undefined) patch.comment = body.comment;
     const request = await service.updateAbsenceRequest(req.params.id, req.user.id, patch);
     res.json({ data: request });
   }),

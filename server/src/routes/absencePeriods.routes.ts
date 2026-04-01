@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as service from '../services/absencePeriod.service.js';
 import { badRequest } from '../utils/errors.js';
+import { updateAbsencePeriodSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -45,11 +46,10 @@ router.post(
 router.patch(
   '/:id',
   asyncHandler(async (req, res) => {
-    const { started_at, ended_at } = req.body;
+    const body = updateAbsencePeriodSchema.parse(req.body);
     const patch: { started_at?: string; ended_at?: string } = {};
-    if (started_at !== undefined) patch.started_at = started_at;
-    if (ended_at !== undefined) patch.ended_at = ended_at;
-    if (Object.keys(patch).length === 0) throw badRequest('Ingen felter å oppdatere');
+    if (body.started_at !== undefined) patch.started_at = body.started_at;
+    if (body.ended_at !== undefined) patch.ended_at = body.ended_at;
     const period = await service.updateAbsencePeriod(req.params.id, req.user.id, patch);
     res.json({ data: period });
   }),

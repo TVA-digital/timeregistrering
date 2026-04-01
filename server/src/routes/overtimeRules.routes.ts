@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { supabase } from '../services/supabase.js';
 import { notFound } from '../utils/errors.js';
+import { createOvertimeRuleSchema, updateOvertimeRuleSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -23,9 +24,10 @@ router.post(
   '/',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
+    const body = createOvertimeRuleSchema.parse(req.body);
     const { data, error } = await supabase
       .from('overtime_rules')
-      .insert(req.body)
+      .insert(body)
       .select()
       .single();
     if (error) throw error;
@@ -37,9 +39,10 @@ router.patch(
   '/:id',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
+    const body = updateOvertimeRuleSchema.parse(req.body);
     const { data, error } = await supabase
       .from('overtime_rules')
-      .update(req.body)
+      .update(body)
       .eq('id', req.params.id)
       .select()
       .single();

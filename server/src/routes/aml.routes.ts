@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import { supabase } from '../services/supabase.js';
 import { listViolationsForLeader } from '../services/aml.service.js';
+import { amlRuleSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -21,13 +22,14 @@ router.put(
   '/rules',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
+    const body = amlRuleSchema.parse(req.body);
     const { data: existing } = await supabase.from('aml_rules').select('id').limit(1).single();
 
     let result;
     if (existing?.id) {
       const { data, error } = await supabase
         .from('aml_rules')
-        .update({ ...req.body, updated_at: new Date().toISOString() })
+        .update({ ...body, updated_at: new Date().toISOString() })
         .eq('id', existing.id)
         .select()
         .single();
@@ -36,7 +38,7 @@ router.put(
     } else {
       const { data, error } = await supabase
         .from('aml_rules')
-        .insert(req.body)
+        .insert(body)
         .select()
         .single();
       if (error) throw error;

@@ -2,7 +2,9 @@ import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/workSchedule.service.js';
-import { badRequest } from '../utils/errors.js';
+import { badRequest, forbidden } from '../utils/errors.js';
+import { getUserById } from '../services/user.service.js';
+import { createScheduleSchema, createAssignmentSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -23,6 +25,11 @@ router.get(
   asyncHandler(async (req, res) => {
     const { userId } = req.query as { userId?: string };
     if (!userId) throw badRequest('userId er påkrevd');
+    // Leder kan bare se tilordninger for brukere i egen avdeling
+    if (req.user.role === 'leder') {
+      const target = await getUserById(userId);
+      if (target.department_id !== req.user.department_id) throw forbidden();
+    }
     const assignments = await service.listSchedulesForUser(userId);
     res.json({ data: assignments });
   }),
@@ -42,7 +49,8 @@ router.post(
   '/',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const schedule = await service.createSchedule(req.body);
+    const body = createScheduleSchema.parse(req.body);
+    const schedule = await service.createSchedule(body);
     res.status(201).json({ data: schedule });
   }),
 );
@@ -52,7 +60,8 @@ router.post(
   '/assignments',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const assignment = await service.assignScheduleToUser(req.body);
+    const body = createAssignmentSchema.parse(req.body);
+    const assignment = await service.assignScheduleToUser(body);
     res.status(201).json({ data: assignment });
   }),
 );

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/user.service.js';
+import { createUserSchema, updateUserSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -29,7 +30,8 @@ router.post(
   '/',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const user = await service.createUser(req.body);
+    const body = createUserSchema.parse(req.body);
+    const user = await service.createUser(body);
     res.status(201).json({ data: user });
   }),
 );
@@ -38,7 +40,8 @@ router.patch(
   '/:id',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const user = await service.updateUser(req.params.id, req.body);
+    const body = updateUserSchema.parse(req.body);
+    const user = await service.updateUser(req.params.id, body);
     res.json({ data: user });
   }),
 );

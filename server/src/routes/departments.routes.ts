@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/user.service.js';
 import { badRequest } from '../utils/errors.js';
+import { departmentNameSchema } from '../utils/validators.js';
 
 const router = Router();
 
@@ -18,8 +19,7 @@ router.post(
   '/',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const { name } = req.body;
-    if (!name) throw badRequest('Navn er påkrevd');
+    const { name } = departmentNameSchema.parse(req.body);
     const dept = await service.createDepartment(name);
     res.status(201).json({ data: dept });
   }),
@@ -29,8 +29,7 @@ router.patch(
   '/:id',
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const { name } = req.body;
-    if (!name) throw badRequest('Navn er påkrevd');
+    const { name } = departmentNameSchema.parse(req.body);
     const dept = await service.updateDepartment(req.params.id, name);
     res.json({ data: dept });
   }),
