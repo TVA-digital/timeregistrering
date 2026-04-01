@@ -2,7 +2,7 @@
   "version": 2,
   "framework": null,
   "installCommand": "npm install --include=dev",
-  "buildCommand": "npm run build -w shared && npm run build -w server && npx esbuild server/dist/serverless.js --bundle --platform=node --format=cjs --packages=external --outfile=api/index.js",
+  "buildCommand": "npm run build -w shared && npm run build -w server && npx esbuild server/dist/serverless.js --bundle --platform=node --format=cjs --packages=external --outfile=api/index.js && rm -rf server/src shared/src",
   "outputDirectory": "public",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
