@@ -1,13 +1,16 @@
 {
+  "version": 2,
+  "framework": null,
   "installCommand": "npm install --include=dev",
   "buildCommand": "npm run build -w shared && npm run build -w server",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/health", "destination": "/api" }
-  ],
+  "outputDirectory": "public",
   "functions": {
     "api/index.ts": {
       "includeFiles": "server/dist/**"
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/health", "destination": "/api" }
+  ]
 }
