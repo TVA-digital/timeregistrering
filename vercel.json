@@ -5,12 +5,12 @@
   "buildCommand": "npm run build -w shared && npm run build -w server",
   "outputDirectory": "public",
   "functions": {
-    "api/index.mjs": {
+    "api/index.js": {
       "includeFiles": "server/dist/**"
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.mjs" },
-    { "source": "/health", "destination": "/api/index.mjs" }
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/health", "destination": "/api" }
   ]
 }

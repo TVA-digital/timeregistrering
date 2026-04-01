@@ -2,7 +2,6 @@
   "name": "@timeregistrering/server",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "main": "./dist/index.js",
   "scripts": {
     "dev": "npx tsx watch src/index.ts",
