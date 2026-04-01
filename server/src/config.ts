@@ -10,9 +10,8 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-  console.error('Ugyldig miljøkonfigurasjon:');
-  console.error(parsed.error.flatten().fieldErrors);
-  process.exit(1);
+  console.error('Ugyldig miljøkonfigurasjon:', parsed.error.flatten().fieldErrors);
+  throw new Error('Ugyldig miljøkonfigurasjon');
 }
 
 export const config = parsed.data;
