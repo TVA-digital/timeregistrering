@@ -252,7 +252,7 @@ export async function updateAbsenceRequest(
     .single();
 
   if (!existing) throw notFound('Fraværssøknad');
-  if (existing.status !== 'pending' && existing.absence_code?.requires_approval) {
+  if (existing.status !== 'pending' && existing.status !== 'rejected' && existing.absence_code?.requires_approval) {
     throw badRequest('Kan ikke redigere fraværssøknad etter at den er behandlet');
   }
 
@@ -266,6 +266,8 @@ export async function updateAbsenceRequest(
     .update({
       hours_per_day: patch.hours_per_day !== undefined ? patch.hours_per_day : existing.hours_per_day,
       comment: patch.comment !== undefined ? patch.comment : existing.comment,
+      // Reset to pending so the leader must re-evaluate after employee edits a rejected request
+      ...(existing.status === 'rejected' ? { status: 'pending', approved_by: null, approved_at: null, rejection_reason: null } : {}),
     })
     .eq('id', requestId)
     .select('*, absence_code:absence_codes(*)')
@@ -301,7 +303,7 @@ export async function deleteAbsenceRequest(
     .single();
 
   if (!existing) throw notFound('Fraværssøknad');
-  if (existing.status !== 'pending' && existing.absence_code?.requires_approval) {
+  if (existing.status !== 'pending' && existing.status !== 'rejected' && existing.absence_code?.requires_approval) {
     throw badRequest('Kan ikke slette fraværssøknad etter at den er behandlet');
   }
 

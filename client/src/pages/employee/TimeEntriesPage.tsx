@@ -809,7 +809,7 @@ export function TimeEntriesPage() {
                           </div>
                         </td>
                         <td className="px-3 py-2.5">
-                          {(!req.absence_code?.requires_approval || req.status === 'pending') && (
+                          {(!req.absence_code?.requires_approval || req.status === 'pending' || req.status === 'rejected') && (
                             <div className="flex items-center gap-1">
                               <button
                                 aria-label="Endre"
