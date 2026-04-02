@@ -46,12 +46,31 @@ const helpContent: Record<Role, RoleContent> = {
         ],
       },
       {
+        title: 'Hjem-skjerm (dashbordet)',
+        content: [
+          'På hjemskjermen ser du to saldo-kort side om side: fleksitidssaldo og gjenstående feriedager.',
+          'Fleksitid vises i timer og minutter, med grønn farge ved plussaldo og rød ved minussaldo.',
+          'Feriedager vises som antall gjenværende dager. Saldoen oppdateres automatisk når du søker om ferie.',
+          'Du ser også dine siste 5 timeregistreringer med status.',
+        ],
+      },
+      {
         title: 'Fleksitid',
         content: [
           'Fleksitid beregnes automatisk basert på din arbeidsplan.',
           'Jobber du mer enn normalt, øker fleksisaldoen. Jobber du mindre, trekkes det fra.',
-          'Du ser din fleksisaldo på hjemskjermen (dashbordet).',
           'Fleks trekkes automatisk dersom du søker om fravær med en fraværskode som er merket "trekker fra fleks".',
+          'Hvis du mener saldoen er feil, ta kontakt med administrator — de kan justere den manuelt.',
+        ],
+      },
+      {
+        title: 'Feriedager',
+        content: [
+          'Gjenstående feriedager vises på hjemskjermen (dashbordet).',
+          'Når du søker om ferie (fraværskode "Ferie"), trekkes arbeidsdagene automatisk fra saldoen med én gang søknaden leveres inn.',
+          'Avvises søknaden av leder, tilbakeføres dagene til saldoen.',
+          'Sletter du en feriesøknad selv, tilbakeføres dagene også.',
+          'Startkvote (normalt 25 dager) settes av administrator. Ta kontakt dersom saldoen er feil.',
         ],
       },
       {
@@ -61,7 +80,7 @@ const helpContent: Record<Role, RoleContent> = {
           'Velg fraværstype (f.eks. egenmelding, ferie, sykt barn), periode og eventuelt antall timer per dag.',
           'Fraværstyper som krever godkjenning sendes til leder. Du får varsel når søknaden er behandlet.',
           'Fraværstyper uten godkjenningskrav godkjennes automatisk.',
-          'Hvis en søknad avvises, kan du redigere den og sende inn på nytt.',
+          'Hvis en søknad avvises, kan du redigere den og sende inn på nytt — feriesaldoen justeres automatisk.',
         ],
       },
       {
@@ -115,13 +134,15 @@ const helpContent: Record<Role, RoleContent> = {
   },
 
   fagleder: {
-    intro: 'Som fagleder har du tilgang til team-oversikt og kan følge opp timeregistrering.',
+    intro: 'Som fagleder har du tilgang til team-oversikt og kan følge opp timeregistrering for din gruppe.',
     sections: [
       {
         title: 'Team-oversikt',
         content: [
-          'Gå til "Team-oversikt" for å se status for teamet ditt.',
-          'Du ser innsendte timer som venter på behandling og eventuelle AML-varsler.',
+          'Gå til "Team-oversikt" for å se status for din gruppe.',
+          'Du ser hvem som er innstemplet, hvem som har fravær, og eventuelle AML-varsler.',
+          'Klikk på en ansatts navn for å se en fullstendig, lesbar oversikt over vedkommendes timer, fravær og fleksisaldo.',
+          'Ansattvisningen er kun lesemodus — du kan ikke redigere fra denne visningen.',
         ],
       },
       {
@@ -176,6 +197,14 @@ const helpContent: Record<Role, RoleContent> = {
           'AML-regler definerer grenser for arbeidstid iht. Arbeidsmiljøloven.',
           'Gå til "Admin → AML-regler" for å justere terskelverdier (maks dag/uke, hviletid osv.).',
           'Brudd varsles automatisk til leder og vises i team-oversikten.',
+        ],
+      },
+      {
+        title: 'Teamoversikt og ansattvisning',
+        content: [
+          'Som administrator har du tilgang til teamoversikten under "Team-oversikt" i menyen.',
+          'Klikk på en ansatts navn for å se en fullstendig, lesbar oversikt over vedkommendes timer, fravær og fleksisaldo.',
+          'Ansattvisningen dekker alle perioder og viser timeregistreringer, fraværsperioder og fraværssøknader.',
         ],
       },
       {
