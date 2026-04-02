@@ -7,6 +7,7 @@ import { TimeEntriesPage } from './pages/employee/TimeEntriesPage';
 import { RequestAbsencePage } from './pages/employee/RequestAbsencePage';
 import { MyAbsencesPage } from './pages/employee/MyAbsencesPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { HelpPage } from './pages/HelpPage';
 import { LeaderDashboardPage } from './pages/leader/LeaderDashboardPage';
 import { ApproveTimeEntriesPage } from './pages/leader/ApproveTimeEntriesPage';
 import { ApproveAbsencesPage } from './pages/leader/ApproveAbsencesPage';
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="fravar" element={<MyAbsencesPage />} />
           <Route path="fravar/nytt" element={<RequestAbsencePage />} />
           <Route path="varsler" element={<NotificationsPage />} />
+          <Route path="hjelp" element={<HelpPage />} />
 
           <Route element={<RequireRole roles={['leder', 'admin', 'fagleder']} />}>
             <Route path="leder" element={<LeaderDashboardPage />} />

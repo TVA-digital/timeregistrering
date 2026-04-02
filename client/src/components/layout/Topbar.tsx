@@ -1,4 +1,5 @@
-import { Bars3Icon } from '@heroicons/react/24/outline';
+import { Bars3Icon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
 import { Role } from '@timeregistrering/shared';
@@ -47,6 +48,13 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
             {user ? roleLabels[user.role] : ''}
           </span>
         )}
+        <Link
+          to="/hjelp"
+          className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+          aria-label="Hjelp"
+        >
+          <QuestionMarkCircleIcon className="h-6 w-6" />
+        </Link>
         <NotificationBell />
       </div>
     </header>

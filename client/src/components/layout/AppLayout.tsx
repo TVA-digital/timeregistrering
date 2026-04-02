@@ -20,6 +20,7 @@ const pageTitles: Record<string, string> = {
   '/admin/overtidsregler': 'Overtidsregler',
   '/admin/fravaerskoder': 'Fraværskoder',
   '/lonning/eksport': 'Lønnseksport',
+  '/hjelp': 'Hjelp',
 };
 
 export function AppLayout() {
