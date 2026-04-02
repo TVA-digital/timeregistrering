@@ -10,6 +10,7 @@ export type NotificationType =
   | 'time_entry_submitted'
   | 'time_entry_approved'
   | 'time_entry_rejected'
+  | 'time_entry_edited'
   | 'absence_submitted'
   | 'absence_approved'
   | 'absence_rejected'

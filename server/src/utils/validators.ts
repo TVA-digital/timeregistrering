@@ -23,15 +23,17 @@ export const amlRuleSchema = z.object({
 
 // ── Users ────────────────────────────────────────────
 export const createUserSchema = z.object({
+  employee_number: z.string().min(1).max(50),
+  name: z.string().min(1).max(200),
   email: z.string().email('Ugyldig e-postadresse'),
-  full_name: z.string().min(1).max(200),
+  password: z.string().min(6),
   role: z.enum(['ansatt', 'leder', 'admin', 'lonningsansvarlig', 'fagleder']),
-  department_id: uuid.optional(),
+  department_id: uuid.nullable().optional(),
   group_id: uuid.nullable().optional(),
 });
 
 export const updateUserSchema = z.object({
-  full_name: z.string().min(1).max(200).optional(),
+  name: z.string().min(1).max(200).optional(),
   role: z.enum(['ansatt', 'leder', 'admin', 'lonningsansvarlig', 'fagleder']).optional(),
   department_id: uuid.nullable().optional(),
   group_id: uuid.nullable().optional(),
@@ -58,23 +60,26 @@ export const updateOvertimeRuleSchema = z.object({
 export const createAbsenceCodeSchema = z.object({
   code: z.string().min(1).max(20),
   name: z.string().min(1).max(100),
-  requires_approval: z.boolean().optional().default(false),
-  deducts_flex: z.boolean().optional().default(false),
-  adds_flex: z.boolean().optional().default(false),
-  is_active: z.boolean().optional().default(true),
-  is_quick_select: z.boolean().optional().default(false),
-  hours_per_day: z.number().positive().optional(),
+  description: z.string().max(500).optional(),
+  requires_approval: z.boolean().default(false),
+  deducts_flex: z.boolean().default(false),
+  deducts_vacation: z.boolean().default(false),
+  allow_clock_out: z.boolean().optional(),
+  adds_flex: z.boolean().optional(),
+  is_quick_select: z.boolean().optional(),
 });
 
 export const updateAbsenceCodeSchema = z.object({
   code: z.string().min(1).max(20).optional(),
   name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
   requires_approval: z.boolean().optional(),
   deducts_flex: z.boolean().optional(),
+  deducts_vacation: z.boolean().optional(),
+  allow_clock_out: z.boolean().optional(),
   adds_flex: z.boolean().optional(),
   is_active: z.boolean().optional(),
   is_quick_select: z.boolean().optional(),
-  hours_per_day: z.number().positive().nullable().optional(),
 });
 
 // ── Absence Requests ─────────────────────────────────
