@@ -143,6 +143,7 @@ const helpContent: Record<Role, RoleContent> = {
           'Gå til "Admin → Brukere" for å opprette, redigere og deaktivere brukere.',
           'Angi ansattnummer, navn, e-post, rolle, avdeling og gruppe ved opprettelse.',
           'En bruker kan ha én primærrolle, men kan ha tilgang til flere roller (f.eks. ansatt + leder).',
+          'I redigeringsvisningen kan du manuelt overstyre fleksitidssaldo (i minutter) og gjenstående feriedager under "Saldoer"-seksjonen.',
         ],
       },
       {

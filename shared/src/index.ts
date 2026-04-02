@@ -11,3 +11,4 @@ export * from './types/notification.js';
 export * from './types/payroll.js';
 export * from './types/team.js';
 export * from './types/aml.js';
+export * from './types/vacationBalance.js';

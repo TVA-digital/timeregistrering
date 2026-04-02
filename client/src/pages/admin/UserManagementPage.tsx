@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import { User, Department, Group, Role, WorkSchedule, UserScheduleAssignment } from '@timeregistrering/shared';
+import { User, Department, Group, Role, WorkSchedule, UserScheduleAssignment, FlexBalance, VacationBalance } from '@timeregistrering/shared';
 import { toast } from 'sonner';
 import { Card, CardBody } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -131,6 +131,92 @@ function ScheduleSection({ userId }: { userId: string }) {
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+// ---- Saldo-seksjon inne i redigeringsmodalen ----
+function BalancesSection({ userId }: { userId: string }) {
+  const qc = useQueryClient();
+
+  const { data: flexBalance } = useQuery({
+    queryKey: ['flex-balance', userId],
+    queryFn: () => apiFetch<FlexBalance>(`/flex-balance?user_id=${userId}`),
+    enabled: !!userId,
+  });
+
+  const { data: vacationBalance } = useQuery({
+    queryKey: ['vacation-balance', userId],
+    queryFn: () => apiFetch<VacationBalance>(`/flex-balance/vacation?user_id=${userId}`),
+    enabled: !!userId,
+  });
+
+  const [flexMinutes, setFlexMinutes] = useState('');
+  const [vacDays, setVacDays] = useState('');
+
+  const saveBalances = useMutation({
+    mutationFn: () => {
+      const body: Record<string, number> = {};
+      if (flexMinutes.trim() !== '') body.flex_minutes = Number(flexMinutes);
+      if (vacDays.trim() !== '') body.vacation_days = Number(vacDays);
+      return apiFetch<{ ok: boolean }>(`/users/${userId}/balances`, {
+        method: 'PATCH',
+        body: JSON.stringify(body),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['flex-balance', userId] });
+      qc.invalidateQueries({ queryKey: ['vacation-balance', userId] });
+      setFlexMinutes('');
+      setVacDays('');
+    },
+  });
+
+  const currentFlex = flexBalance?.balance_minutes ?? 0;
+  const currentVac = vacationBalance?.remaining_days ?? 25;
+
+  return (
+    <div className="border-t border-gray-100 pt-4 mt-1 space-y-3">
+      <p className="text-sm font-semibold text-gray-700">Saldoer</p>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">
+            Fleksitid (min) — nå: <span className="font-semibold text-gray-700">{currentFlex}</span>
+          </label>
+          <input
+            type="number"
+            value={flexMinutes}
+            onChange={(e) => setFlexMinutes(e.target.value)}
+            placeholder={String(currentFlex)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">
+            Feriedager — nå: <span className="font-semibold text-gray-700">{currentVac}</span>
+          </label>
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            value={vacDays}
+            onChange={(e) => setVacDays(e.target.value)}
+            placeholder={String(currentVac)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
+
+      <Button
+        size="sm"
+        variant="secondary"
+        loading={saveBalances.isPending}
+        disabled={flexMinutes.trim() === '' && vacDays.trim() === ''}
+        onClick={() => saveBalances.mutate()}
+      >
+        Lagre saldoer
+      </Button>
     </div>
   );
 }
@@ -309,6 +395,9 @@ export function UserManagementPage() {
 
           {/* Arbeidsplan-seksjon */}
           {editUser && <ScheduleSection userId={editUser.id} />}
+
+          {/* Saldo-seksjon */}
+          {editUser && <BalancesSection userId={editUser.id} />}
 
           <div className="flex gap-3 pt-2">
             <Button loading={updateUser.isPending}

@@ -9,6 +9,7 @@ import {
 import { notFound, badRequest } from '../utils/errors.js';
 import { createNotification, notifyLeadersInDepartment } from './notification.service.js';
 import { recordFlexForAbsence, reverseFlexForAbsenceRequest } from './flex.service.js';
+import { calcVacationDays, deductVacationDays, reverseVacationDeduction } from './vacation.service.js';
 import { getActiveSchedule, getNormalMinutesForDay } from './workSchedule.service.js';
 import { isNorwegianHoliday } from '../utils/norwegianHolidays.js';
 import { jsWeekdayToNorwegian } from '../utils/dateUtils.js';
@@ -58,7 +59,7 @@ export async function createAbsenceRequest(
 ): Promise<AbsenceRequest> {
   const code = await supabase
     .from('absence_codes')
-    .select('requires_approval, is_active, deducts_flex, name')
+    .select('requires_approval, is_active, deducts_flex, deducts_vacation, name')
     .eq('id', body.absence_code_id)
     .single();
 
@@ -104,6 +105,19 @@ export async function createAbsenceRequest(
         data.id,
         -totalMinutes,
         `Fravær: ${code.data.name} (${data.date_from}${data.date_from !== data.date_to ? ' – ' + data.date_to : ''})`,
+      );
+    }
+  }
+
+  // Trekk fra feriedager ved innsending (uavhengig av requires_approval)
+  if (code.data.deducts_vacation) {
+    const vacDays = calcVacationDays(data.date_from, data.date_to);
+    if (vacDays > 0) {
+      await deductVacationDays(
+        userId,
+        data.id,
+        vacDays,
+        `Ferie: ${code.data.name} (${data.date_from}${data.date_from !== data.date_to ? ' – ' + data.date_to : ''})`,
       );
     }
   }
@@ -246,7 +260,7 @@ export async function updateAbsenceRequest(
 ): Promise<AbsenceRequest> {
   const { data: existing } = await supabase
     .from('absence_requests')
-    .select('*, absence_code:absence_codes(requires_approval, deducts_flex, name)')
+    .select('*, absence_code:absence_codes(requires_approval, deducts_flex, deducts_vacation, name)')
     .eq('id', requestId)
     .eq('user_id', userId)
     .single();
@@ -288,6 +302,19 @@ export async function updateAbsenceRequest(
     }
   }
 
+  // Trekk feriedager på nytt hvis søknaden re-sendes inn (var avvist)
+  if (existing.status === 'rejected' && existing.absence_code?.deducts_vacation) {
+    const vacDays = calcVacationDays(data.date_from, data.date_to);
+    if (vacDays > 0) {
+      await deductVacationDays(
+        userId,
+        requestId,
+        vacDays,
+        `Ferie (re-innsending): ${existing.absence_code.name} (${data.date_from}${data.date_from !== data.date_to ? ' – ' + data.date_to : ''})`,
+      );
+    }
+  }
+
   return data as AbsenceRequest;
 }
 
@@ -297,7 +324,7 @@ export async function deleteAbsenceRequest(
 ): Promise<void> {
   const { data: existing } = await supabase
     .from('absence_requests')
-    .select('*, absence_code:absence_codes(requires_approval, deducts_flex)')
+    .select('*, absence_code:absence_codes(requires_approval, deducts_flex, deducts_vacation)')
     .eq('id', requestId)
     .eq('user_id', userId)
     .single();
@@ -312,6 +339,11 @@ export async function deleteAbsenceRequest(
     await reverseFlexForAbsenceRequest(requestId);
   }
 
+  // Reverser ferietrekk hvis fraværskoden trakk fra ferie
+  if (existing.absence_code?.deducts_vacation) {
+    await reverseVacationDeduction(requestId);
+  }
+
   await supabase.from('absence_requests').delete().eq('id', requestId);
 }
 
@@ -322,7 +354,7 @@ export async function rejectAbsenceRequest(
 ): Promise<AbsenceRequest> {
   const { data: req } = await supabase
     .from('absence_requests')
-    .select('*')
+    .select('*, absence_code:absence_codes(deducts_vacation)')
     .eq('id', requestId)
     .single();
 
@@ -343,6 +375,11 @@ export async function rejectAbsenceRequest(
     .single();
 
   if (error || !data) throw error ?? new Error('Kunne ikke avvise');
+
+  // Reverser ferietrekk ved avvisning
+  if (req.absence_code?.deducts_vacation) {
+    await reverseVacationDeduction(requestId);
+  }
 
   await createNotification(
     req.user_id,

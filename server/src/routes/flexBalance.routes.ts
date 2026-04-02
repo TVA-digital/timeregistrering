@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as service from '../services/flex.service.js';
+import * as vacationService from '../services/vacation.service.js';
 import { forbidden } from '../utils/errors.js';
 import { assertCanViewUser } from '../utils/authz.js';
 
@@ -18,6 +19,19 @@ router.get(
     }
     const balance = await service.getFlexBalance(req.user.id);
     res.json({ data: balance });
+  }),
+);
+
+router.get(
+  '/vacation',
+  asyncHandler(async (req, res) => {
+    const targetUserId = req.query['user_id'] as string | undefined;
+    if (targetUserId) {
+      if (!['leder', 'admin', 'fagleder'].includes(req.user.role)) throw forbidden();
+      await assertCanViewUser(req.user, targetUserId);
+      return res.json({ data: await vacationService.getVacationBalance(targetUserId) });
+    }
+    res.json({ data: await vacationService.getVacationBalance(req.user.id) });
   }),
 );
 

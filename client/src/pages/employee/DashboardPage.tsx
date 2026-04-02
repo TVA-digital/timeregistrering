@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../../lib/api';
-import { FlexBalance, TimeEntry } from '@timeregistrering/shared';
+import { FlexBalance, VacationBalance, TimeEntry } from '@timeregistrering/shared';
 import { ClockInOutButton } from '../../features/timeEntries/ClockInOutButton';
 import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { statusBadge } from '../../components/ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
-import { ScaleIcon } from '@heroicons/react/24/outline';
+import { ScaleIcon, SunIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { nb } from 'date-fns/locale';
 
@@ -26,6 +26,11 @@ export function DashboardPage() {
     queryFn: () => apiFetch<FlexBalance>('/flex-balance'),
   });
 
+  const { data: vacationBalance } = useQuery({
+    queryKey: ['vacation-balance'],
+    queryFn: () => apiFetch<VacationBalance>('/flex-balance/vacation'),
+  });
+
   const { data: recentEntries } = useQuery({
     queryKey: ['time-entries', 'recent'],
     queryFn: () => apiFetch<TimeEntry[]>('/time-entries?mine=true'),
@@ -33,6 +38,7 @@ export function DashboardPage() {
 
   const recent = (recentEntries ?? []).slice(0, 5);
   const balance = flexBalance?.balance_minutes ?? 0;
+  const vacDays = vacationBalance?.remaining_days ?? 25;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -49,20 +55,36 @@ export function DashboardPage() {
       {/* Clock in/out */}
       <ClockInOutButton />
 
-      {/* Fleksitidssaldo */}
-      <Card className={`overflow-hidden border-l-4 ${balance >= 0 ? 'border-l-green-500' : 'border-l-red-500'}`}>
-        <CardBody>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Fleksitidssaldo</p>
-              <p className={`text-4xl font-bold mt-2 ${balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {formatMinutes(balance)}
-              </p>
+      {/* Saldo-kort: fleksitid og feriedager */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card className={`overflow-hidden border-l-4 ${balance >= 0 ? 'border-l-green-500' : 'border-l-red-500'}`}>
+          <CardBody>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Fleksitidssaldo</p>
+                <p className={`text-3xl font-bold mt-2 ${balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                  {formatMinutes(balance)}
+                </p>
+              </div>
+              <ScaleIcon className={`h-7 w-7 mt-1 ${balance >= 0 ? 'text-green-400' : 'text-red-400'}`} />
             </div>
-            <ScaleIcon className={`h-8 w-8 mt-1 ${balance >= 0 ? 'text-green-400' : 'text-red-400'}`} />
-          </div>
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+
+        <Card className="overflow-hidden border-l-4 border-l-blue-500">
+          <CardBody>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Gjenstående feriedager</p>
+                <p className={`text-3xl font-bold mt-2 ${vacDays > 0 ? 'text-blue-700' : 'text-red-700'}`}>
+                  {vacDays % 1 === 0 ? vacDays : vacDays.toFixed(1)}
+                </p>
+              </div>
+              <SunIcon className={`h-7 w-7 mt-1 ${vacDays > 0 ? 'text-blue-400' : 'text-red-400'}`} />
+            </div>
+          </CardBody>
+        </Card>
+      </div>
 
       {/* Siste timer */}
       <Card>

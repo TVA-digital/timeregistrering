@@ -5,6 +5,8 @@ import * as service from '../services/user.service.js';
 import { createUserSchema, updateUserSchema } from '../utils/validators.js';
 import { assertCanViewUser } from '../utils/authz.js';
 import { forbidden } from '../utils/errors.js';
+import { setFlexBalance } from '../services/flex.service.js';
+import { setVacationBalance } from '../services/vacation.service.js';
 
 const router = Router();
 
@@ -47,6 +49,18 @@ router.get(
     await assertCanViewUser(viewer, req.params.id);
     const user = await service.getUserById(req.params.id);
     res.json({ data: user });
+  }),
+);
+
+// Admin-overstyring av fleksitids- og feriesaldo
+router.patch(
+  '/:id/balances',
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const { flex_minutes, vacation_days } = req.body;
+    if (typeof flex_minutes === 'number') await setFlexBalance(req.params.id, flex_minutes);
+    if (typeof vacation_days === 'number') await setVacationBalance(req.params.id, vacation_days);
+    res.json({ data: { ok: true } });
   }),
 );
 

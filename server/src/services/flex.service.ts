@@ -146,6 +146,14 @@ export async function getFlexBalance(userId: string): Promise<FlexBalance> {
   return data as FlexBalance;
 }
 
+export async function setFlexBalance(userId: string, minutes: number): Promise<void> {
+  const { error } = await supabase
+    .from('flex_balance')
+    .upsert({ user_id: userId, balance_minutes: minutes, updated_at: new Date().toISOString() });
+
+  if (error) throw error;
+}
+
 export async function getFlexTransactions(userId: string): Promise<FlexTransaction[]> {
   const { data, error } = await supabase
     .from('flex_transactions')
