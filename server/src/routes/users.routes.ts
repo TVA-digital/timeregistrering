@@ -3,6 +3,8 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/user.service.js';
 import { createUserSchema, updateUserSchema } from '../utils/validators.js';
+import { assertCanViewUser } from '../utils/authz.js';
+import { forbidden } from '../utils/errors.js';
 
 const router = Router();
 
@@ -33,6 +35,18 @@ router.post(
     const body = createUserSchema.parse(req.body);
     const user = await service.createUser(body);
     res.status(201).json({ data: user });
+  }),
+);
+
+// Hent enkeltbruker (leder/admin/fagleder kan se brukere de har tilgang til)
+router.get(
+  '/:id',
+  asyncHandler(async (req, res) => {
+    const viewer = req.user;
+    if (!['leder', 'admin', 'fagleder'].includes(viewer.role)) throw forbidden();
+    await assertCanViewUser(viewer, req.params.id);
+    const user = await service.getUserById(req.params.id);
+    res.json({ data: user });
   }),
 );
 

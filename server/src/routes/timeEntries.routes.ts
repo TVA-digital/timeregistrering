@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/timeEntry.service.js';
-import { badRequest } from '../utils/errors.js';
+import { badRequest, forbidden } from '../utils/errors.js';
 import { dateRangeQuery } from '../utils/validators.js';
+import { assertCanViewUser } from '../utils/authz.js';
 
 const router = Router();
 
@@ -16,9 +17,15 @@ router.get(
     const user = req.user;
 
     const mine = req.query['mine'] === 'true';
+    const targetUserId = req.query['user_id'] as string | undefined;
 
     let entries;
-    if (mine || user.role === 'ansatt') {
+    // Leder/admin/fagleder kan hente en spesifikk brukers timer
+    if (targetUserId) {
+      if (!['leder', 'admin', 'fagleder'].includes(user.role)) throw forbidden();
+      await assertCanViewUser(user, targetUserId);
+      entries = await service.listEntries({ userId: targetUserId, from, to });
+    } else if (mine || user.role === 'ansatt') {
       entries = await service.listEntries({ userId: user.id, status, from, to });
     } else if (user.role === 'leder') {
       entries = await service.listEntries({

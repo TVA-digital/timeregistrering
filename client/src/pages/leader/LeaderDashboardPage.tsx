@@ -441,8 +441,10 @@ export function LeaderDashboardPage() {
                   return (
                     <tr key={row.user.id} className="hover:bg-gray-50">
                       <td className="px-5 py-3">
-                        <p className="font-medium text-gray-900">{row.user.name}</p>
-                        <p className="text-xs text-gray-400">{row.user.employee_number}</p>
+                        <Link to={`/leder/ansatt/${row.user.id}`} className="group">
+                          <p className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">{row.user.name}</p>
+                          <p className="text-xs text-gray-400">{row.user.employee_number}</p>
+                        </Link>
                       </td>
                       <td className="px-4 py-3">
                         <StatusChip row={row} />

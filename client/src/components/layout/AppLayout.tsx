@@ -21,6 +21,8 @@ const pageTitles: Record<string, string> = {
   '/admin/fravaerskoder': 'Fraværskoder',
   '/lonning/eksport': 'Lønnseksport',
   '/hjelp': 'Hjelp',
+  // Dynamiske ruter håndteres ikke her — tittel settes i komponenten
+
 };
 
 export function AppLayout() {

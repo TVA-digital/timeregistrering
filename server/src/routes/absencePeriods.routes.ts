@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as service from '../services/absencePeriod.service.js';
-import { badRequest } from '../utils/errors.js';
+import { badRequest, forbidden } from '../utils/errors.js';
 import { updateAbsencePeriodSchema } from '../utils/validators.js';
+import { assertCanViewUser } from '../utils/authz.js';
 
 const router = Router();
 
@@ -11,10 +12,19 @@ router.get(
   '/',
   asyncHandler(async (req, res) => {
     const { from, to } = req.query as Record<string, string>;
+    const targetUserId = req.query['user_id'] as string | undefined;
+    const fromDate = from ?? new Date().toISOString().slice(0, 10);
+    const toDate = to ?? new Date().toISOString().slice(0, 10);
+
+    if (targetUserId) {
+      if (!['leder', 'admin', 'fagleder'].includes(req.user.role)) throw forbidden();
+      await assertCanViewUser(req.user, targetUserId);
+    }
+
     const periods = await service.listAbsencePeriods(
-      req.user.id,
-      from ?? new Date().toISOString().slice(0, 10),
-      to ?? new Date().toISOString().slice(0, 10),
+      targetUserId ?? req.user.id,
+      fromDate,
+      toDate,
     );
     res.json({ data: periods });
   }),

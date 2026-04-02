@@ -83,6 +83,7 @@ const helpContent: Record<Role, RoleContent> = {
         content: [
           'Gå til "Team-oversikt" for å se en samlet status for teamet ditt.',
           'Du ser hvem som har innsendte timer som venter på godkjenning, og eventuelle AML-varsler.',
+          'Klikk på en ansatts navn for å se en fullstendig, lesbar oversikt over vedkommendes timer, fravær og fleksisaldo.',
         ],
       },
       {

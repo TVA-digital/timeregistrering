@@ -11,6 +11,7 @@ import { HelpPage } from './pages/HelpPage';
 import { LeaderDashboardPage } from './pages/leader/LeaderDashboardPage';
 import { ApproveTimeEntriesPage } from './pages/leader/ApproveTimeEntriesPage';
 import { ApproveAbsencesPage } from './pages/leader/ApproveAbsencesPage';
+import { EmployeeTimelinePage } from './pages/leader/EmployeeTimelinePage';
 import { UserManagementPage } from './pages/admin/UserManagementPage';
 import { DepartmentsPage } from './pages/admin/DepartmentsPage';
 import { WorkSchedulesPage } from './pages/admin/WorkSchedulesPage';
@@ -66,6 +67,7 @@ export default function App() {
 
           <Route element={<RequireRole roles={['leder', 'admin', 'fagleder']} />}>
             <Route path="leder" element={<LeaderDashboardPage />} />
+            <Route path="leder/ansatt/:userId" element={<EmployeeTimelinePage />} />
           </Route>
 
           <Route element={<RequireRole roles={['leder', 'admin']} />}>

@@ -2,8 +2,9 @@ import { Router } from 'express';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { requireRole } from '../middleware/requireRole.js';
 import * as service from '../services/absence.service.js';
-import { badRequest } from '../utils/errors.js';
+import { badRequest, forbidden } from '../utils/errors.js';
 import { createAbsenceCodeSchema, updateAbsenceCodeSchema, updateAbsenceRequestSchema } from '../utils/validators.js';
+import { assertCanViewUser } from '../utils/authz.js';
 
 const router = Router();
 
@@ -48,9 +49,14 @@ router.get(
     const dateOptions = { dateFrom: from, dateTo: to };
 
     const mine = req.query['mine'] === 'true';
+    const targetUserId = req.query['user_id'] as string | undefined;
 
     let requests;
-    if (mine || user.role === 'ansatt') {
+    if (targetUserId) {
+      if (!['leder', 'admin', 'fagleder'].includes(user.role)) throw forbidden();
+      await assertCanViewUser(user, targetUserId);
+      requests = await service.listAbsenceRequests({ userId: targetUserId, ...dateOptions });
+    } else if (mine || user.role === 'ansatt') {
       requests = await service.listAbsenceRequests({ userId: user.id, status, ...dateOptions });
     } else if (user.role === 'leder') {
       requests = await service.listAbsenceRequests({
