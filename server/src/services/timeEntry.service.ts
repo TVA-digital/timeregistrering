@@ -30,6 +30,20 @@ export async function clockIn(userId: string, comment?: string): Promise<TimeEnt
     throw badRequest('Du er allerede innstemplet. Stempl ut først.');
   }
 
+  // Sjekk om bruker har godkjent fravær i dag
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: absenceToday } = await supabase
+    .from('absence_requests')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('status', 'approved')
+    .lte('date_from', today)
+    .gte('date_to', today)
+    .limit(1);
+  if (absenceToday && absenceToday.length > 0) {
+    throw badRequest('Du har godkjent fravær i dag og kan ikke stemple inn');
+  }
+
   const { data, error } = await supabase
     .from('time_entries')
     .insert({
@@ -72,6 +86,9 @@ export async function clockOut(entryId: string, userId: string, comment?: string
 
   // Hent arbeidsplan og beregn normalminutter for dagen
   const schedule = await getActiveSchedule(userId, clockIn);
+  if (!schedule) {
+    console.warn(`[FLEX] Ingen arbeidsplan for bruker ${userId} — fleks beregnes med 0 normaltimer`);
+  }
   const isHoliday = isNorwegianHoliday(clockIn);
   const weekday = isHoliday ? -1 : jsWeekdayToNorwegian(clockIn.getDay());
   const normalMinutes = schedule && !isHoliday ? getNormalMinutesForDay(schedule, weekday) : 0;
@@ -149,6 +166,7 @@ export async function approveEntry(entryId: string, approverId: string): Promise
 
   if (!entry) throw notFound('Timeregistrering');
   if (entry.status !== 'submitted') throw badRequest('Kan bare godkjenne innsendte timer');
+  if (entry.user_id === approverId) throw badRequest('Du kan ikke godkjenne egne timer');
 
   const { data, error } = await supabase
     .from('time_entries')
@@ -195,6 +213,7 @@ export async function rejectEntry(
 
   if (!entry) throw notFound('Timeregistrering');
   if (entry.status !== 'submitted') throw badRequest('Kan bare avvise innsendte timer');
+  if (entry.user_id === approverId) throw badRequest('Du kan ikke avvise egne timer');
 
   // Reverser fleksitiden som ble registrert ved utsjekk
   await reverseFlexForTimeEntry(entryId);
@@ -300,6 +319,9 @@ export async function updateEntry(
 
     // Beregn normalminutter for dagen
     const schedule = await getActiveSchedule(userId, newClockIn);
+    if (!schedule) {
+      console.warn(`[FLEX] Ingen arbeidsplan for bruker ${userId} — fleks beregnes med 0 normaltimer`);
+    }
     const isHoliday = isNorwegianHoliday(newClockIn);
     const weekday = isHoliday ? -1 : jsWeekdayToNorwegian(newClockIn.getDay());
     const normalMinutes = schedule && !isHoliday ? getNormalMinutesForDay(schedule, weekday) : 0;
@@ -409,6 +431,9 @@ export async function adminUpdateEntry(
   await reverseFlexForTimeEntry(entryId);
 
   const schedule      = await getActiveSchedule(entry.user_id, newClockIn);
+  if (!schedule) {
+    console.warn(`[FLEX] Ingen arbeidsplan for bruker ${entry.user_id} — fleks beregnes med 0 normaltimer`);
+  }
   const isHoliday     = isNorwegianHoliday(newClockIn);
   const weekday       = isHoliday ? -1 : jsWeekdayToNorwegian(newClockIn.getDay());
   const normalMinutes = schedule && !isHoliday ? getNormalMinutesForDay(schedule, weekday) : 0;
@@ -430,6 +455,17 @@ export async function adminUpdateEntry(
 
   const actualMinutes = Math.round((newClockOut.getTime() - newClockIn.getTime()) / 60000);
   await recordFlexForTimeEntry(entry.user_id, entryId, actualMinutes, normalMinutes);
+
+  // Varsle brukeren om korrigeringen
+  const dateStr = newClockIn.toISOString().slice(0, 10).split('-').reverse().join('.');
+  await createNotification(
+    entry.user_id,
+    'time_entry_edited',
+    'Timer korrigert av administrator',
+    `Din timeregistrering for ${dateStr} ble korrigert.`,
+    entryId,
+    'time_entry',
+  );
 
   // Kjør full AML-sjekk asynkront etter endringen
   checkAllViolations(entry.user_id).catch((err) =>
@@ -455,5 +491,7 @@ export async function deleteEntry(entryId: string, userId: string, isAdmin: bool
     throw forbidden();
   }
 
+  // Reverser eventuell fleksitid før sletting
+  await reverseFlexForTimeEntry(entryId);
   await supabase.from('time_entries').delete().eq('id', entryId);
 }

@@ -64,6 +64,19 @@ export async function createAbsenceRequest(
 
   if (!code.data?.is_active) throw badRequest('Fraværskoden er ikke aktiv');
 
+  // Sjekk overlapp med eksisterende godkjente timer i perioden
+  const { data: overlapping } = await supabase
+    .from('time_entries')
+    .select('id')
+    .eq('user_id', userId)
+    .in('status', ['approved', 'submitted'])
+    .gte('clock_in', body.date_from)
+    .lte('clock_in', body.date_to + 'T23:59:59')
+    .limit(1);
+  if (overlapping && overlapping.length > 0) {
+    throw badRequest('Det finnes allerede innsendte eller godkjente timer i denne perioden');
+  }
+
   const initialStatus = code.data.requires_approval ? 'pending' : 'approved';
 
   const { data, error } = await supabase
@@ -157,6 +170,7 @@ export async function approveAbsenceRequest(
 
   if (!req) throw notFound('Fraværssøknad');
   if (req.status !== 'pending') throw badRequest('Søknaden er allerede behandlet');
+  if (req.user_id === approverId) throw badRequest('Du kan ikke godkjenne egne fraværssøknader');
 
   const { data, error } = await supabase
     .from('absence_requests')
@@ -312,6 +326,7 @@ export async function rejectAbsenceRequest(
 
   if (!req) throw notFound('Fraværssøknad');
   if (req.status !== 'pending') throw badRequest('Søknaden er allerede behandlet');
+  if (req.user_id === approverId) throw badRequest('Du kan ikke avvise egne fraværssøknader');
 
   const { data, error } = await supabase
     .from('absence_requests')

@@ -157,6 +157,10 @@ function EditEntryModal({
   const [comment, setComment] = useState(state.comment);
 
   const entryDate = format(new Date(state.entry.clock_in), 'yyyy-MM-dd');
+  const clockOutDate = state.entry.clock_out
+    ? format(new Date(state.entry.clock_out), 'yyyy-MM-dd')
+    : entryDate;
+  const crossesMidnight = entryDate !== clockOutDate;
 
   function handleSave() {
     onSave({
@@ -201,6 +205,11 @@ function EditEntryModal({
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
+        {crossesMidnight && (
+          <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+            OBS: Denne registreringen går over midnatt ({entryDate} &rarr; {clockOutDate})
+          </p>
+        )}
         <div className="flex gap-3 pt-1">
           <Button loading={loading} onClick={handleSave}>Lagre</Button>
           <Button variant="secondary" onClick={onClose}>Avbryt</Button>
@@ -326,6 +335,7 @@ export function TimeEntriesPage() {
   });
 
   const currentMonthDrafts = currentMonthEntries.filter((e) => e.status === 'draft' && e.clock_out);
+  const incompleteDrafts = currentMonthEntries.filter((e) => e.status === 'draft' && !e.clock_out);
 
   const submitMonth = useMutation({
     mutationFn: (yearMonth: string) =>
@@ -534,10 +544,17 @@ export function TimeEntriesPage() {
         </div>
       ) : currentMonthDrafts.length > 0 ? (
         <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center justify-between gap-4">
-          <p className="text-sm text-blue-800">
-            <span className="font-medium">{currentMonthDrafts.length} utkast</span> for{' '}
-            <span className="capitalize">{currentMonthLabel}</span> – klar til innsending
-          </p>
+          <div className="text-sm text-blue-800">
+            <p>
+              <span className="font-medium">{currentMonthDrafts.length} utkast</span> for{' '}
+              <span className="capitalize">{currentMonthLabel}</span> – klar til innsending
+            </p>
+            {incompleteDrafts.length > 0 && (
+              <p className="text-xs text-amber-700 mt-0.5">
+                {incompleteDrafts.length} kladd(er) uten utstemplingstid blir ikke sendt inn
+              </p>
+            )}
+          </div>
           <Button
             size="sm"
             loading={submitMonth.isPending}
@@ -559,6 +576,8 @@ export function TimeEntriesPage() {
                 <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />
               ))}
             </div>
+          ) : entries.length === 0 && absenceRequests.length === 0 ? (
+            <p className="text-center text-gray-500 py-12">Ingen registreringer i denne perioden</p>
           ) : (
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 z-10 shadow-sm">
